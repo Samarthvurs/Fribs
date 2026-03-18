@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FRIBS — Fraud-Resistant Intelligent Booking System</title>
+  <meta name="description" content="Secure, intelligent ticket booking platform with real-time fraud detection." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Application Styles -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ============================================================
+     LOADING SPINNER OVERLAY
+     ============================================================ -->
+<div id="spinnerOverlay" class="spinner-overlay">
+  <div class="spinner"></div>
+  <span id="spinnerLabel" class="spinner-label">Loading…</span>
+</div>
+
+<!-- ============================================================
+     TOAST CONTAINER
+     ============================================================ -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- ============================================================
+     BOOKING CONFIRMATION MODAL
+     ============================================================ -->
+<div id="bookingModal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" data-close-modal><i class="fas fa-times"></i></button>
+    <div class="modal-icon"><i class="fas fa-ticket-alt" style="color:var(--accent)"></i></div>
+    <h3>Confirm Your Booking</h3>
+    <p>Please review your booking details before payment.</p>
+    <div class="modal-summary">
+      <div class="modal-summary-row">
+        <span>Event</span>
+        <span id="modalEventName">—</span>
+      </div>
+      <div class="modal-summary-row">
+        <span>Seats</span>
+        <span id="modalSeats">—</span>
+      </div>
+      <div class="modal-summary-row">
+        <span>Date &amp; Time</span>
+        <span id="modalDateTime">—</span>
+      </div>
+      <div class="modal-summary-row" style="font-weight:700;margin-top:.25rem;padding-top:.5rem;border-top:1px solid var(--card-border)">
+        <span>Total Payable</span>
+        <span id="modalTotal" style="color:var(--accent)">₹0</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-full" data-close-modal>Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="confirmBooking()">
+        <i class="fas fa-lock"></i> Pay &amp; Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SHARED NAVBAR (shown on all inner pages)
+     ============================================================ -->
+<nav class="navbar" id="mainNav" style="display:none">
+  <a href="#" class="nav-logo" data-page="home">
+    <div class="logo-icon">🔐</div>
+    <span>FRI<span>BS</span></span>
+  </a>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#" data-page="home" class="active"><i class="fas fa-home"></i> Home</a></li>
+    <li><a href="#" data-page="mybookings"><i class="fas fa-ticket-alt"></i> My Bookings</a></li>
+    <li id="adminNavLink" style="display:none">
+      <a href="#" data-page="admin"><i class="fas fa-shield-alt"></i> Admin</a>
+    </li>
+  </ul>
+
+  <div class="nav-right">
+    <div class="nav-avatar" title="Profile">AA</div>
+    <button class="btn btn-sm btn-secondary" data-page="logout">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+</nav>
+
+
+<!-- ============================================================
+     PAGE 1: LOGIN
+     ============================================================ -->
+<div id="loginPage" class="auth-page">
+  <div class="card auth-card fade-up">
+    <div class="auth-brand">
+      <div class="brand-logo">🔐</div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to your FRIBS account</p>
+    </div>
+
+    <form id="loginForm" class="auth-form" novalidate>
+      <!-- Email -->
+      <div class="form-group">
+        <label for="loginEmail">Email Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="loginEmail" class="form-control"
+                 placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <span id="loginEmailErr" class="form-error"></span>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="loginPassword" class="form-control"
+                 placeholder="Enter your password" autocomplete="current-password" />
+          <button type="button" class="toggle-pw" onclick="togglePassword('loginPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <span id="loginPasswordErr" class="form-error"></span>
+      </div>
+
+      <!-- Demo hint -->
+      <div class="form-group">
+        <div class="form-hint" style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);padding:.6rem .8rem;border-radius:8px;color:var(--text-secondary)">
+          <i class="fas fa-info-circle" style="color:var(--accent)"></i>
+          <strong style="color:var(--accent)"> Demo:</strong>
+          User: <code>alice@example.com</code> · Admin: <code>bob@example.com</code> · Password: <code>pass123</code>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Don't have an account?
+      <a href="#" onclick="navigateTo('registerPage')">Create one</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     PAGE 2: REGISTER
+     ============================================================ -->
+<div id="registerPage" class="auth-page">
+  <div class="card auth-card fade-up">
+    <div class="auth-brand">
+      <div class="brand-logo">✨</div>
+      <h1>Create Account</h1>
+      <p>Join FRIBS and start booking</p>
+    </div>
+
+    <form id="registerForm" class="auth-form" novalidate>
+      <!-- Name -->
+      <div class="form-group">
+        <label for="regName">Full Name</label>
+        <div class="input-wrap">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" id="regName" class="form-control"
+                 placeholder="Your full name" autocomplete="name" />
+        </div>
+        <span id="regNameErr" class="form-error"></span>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="regEmail">Email Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="regEmail" class="form-control"
+                 placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <span id="regEmailErr" class="form-error"></span>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="regPassword">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="regPassword" class="form-control"
+                 placeholder="Min 6 characters" autocomplete="new-password" />
+          <button type="button" class="toggle-pw" onclick="togglePassword('regPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="pw-strength-bar">
+          <div id="pwStrengthFill" class="pw-strength-fill"></div>
+        </div>
+        <div id="pwStrengthLabel" class="pw-strength-label"></div>
+        <span id="regPasswordErr" class="form-error"></span>
+      </div>
+
+      <!-- Confirm -->
+      <div class="form-group">
+        <label for="regConfirm">Confirm Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="regConfirm" class="form-control"
+                 placeholder="Repeat password" autocomplete="new-password" />
+          <button type="button" class="toggle-pw" onclick="togglePassword('regConfirm')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <span id="regConfirmErr" class="form-error"></span>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg">
+        <i class="fas fa-user-plus"></i> Create Account
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account?
+      <a href="#" onclick="navigateTo('loginPage')">Sign in</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     PAGE 3: HOME / EVENTS DASHBOARD
+     ============================================================ -->
+<div id="homePage" class="dashboard-page">
+
+  <!-- Hero Banner -->
+  <div class="hero-banner">
+    <div class="hero-content">
+      <div class="hero-tag"><i class="fas fa-shield-alt"></i> Fraud-Resistant Booking</div>
+      <h1 class="hero-title">Book Your Next<br/><span>Experience</span></h1>
+      <p class="hero-subtitle">Movies, concerts, flights and more — secured by intelligent fraud detection.</p>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <button class="filter-tab active" data-filter="all">
+      <i class="fas fa-th-large"></i> All
+    </button>
+    <button class="filter-tab" data-filter="movie">
+      🎬 Movies
+    </button>
+    <button class="filter-tab" data-filter="concert">
+      🎵 Concerts
+    </button>
+    <button class="filter-tab" data-filter="flight">
+      ✈️ Flights
+    </button>
+    <button class="filter-tab" data-filter="sports">
+      🏏 Sports
+    </button>
+    <button class="filter-tab" data-filter="comedy">
+      😂 Comedy
+    </button>
+
+    <!-- Search -->
+    <div class="search-bar-wrap">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchBar" class="search-bar" placeholder="Search events…" />
+    </div>
+  </div>
+
+  <!-- Events Grid -->
+  <section class="events-section">
+    <div class="section-header">
+      <h2 class="section-title">Available Events <span id="eventsCount"></span></h2>
+    </div>
+    <div class="events-grid" id="eventsGrid">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 FRIBS — Fraud-Resistant Intelligent Booking System &nbsp;|&nbsp; All rights reserved</p>
+  </footer>
+</div>
+
+
+<!-- ============================================================
+     PAGE 4: SEAT SELECTION
+     ============================================================ -->
+<div id="seatPage" class="seat-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <button class="back-btn" onclick="navigateTo('homePage'); renderEvents()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div class="page-header-info">
+      <h2 id="seatPageTitle">Select Seats</h2>
+      <p id="seatPageSubtitle" class="muted"></p>
+    </div>
+  </div>
+
+  <div class="seat-page-inner">
+    <!-- Left: Seat Grid -->
+    <div>
+      <!-- Screen indicator -->
+      <div class="screen-wrap">
+        <div class="screen"></div>
+        <div class="screen-label">Screen / Stage / Front</div>
+      </div>
+
+      <!-- Legend -->
+      <div class="seat-legend">
+        <div class="legend-item">
+          <div class="legend-dot available"></div> Available
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot booked"></div> Booked
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot selected"></div> Selected
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot vip"></div> VIP/Premium
+        </div>
+      </div>
+
+      <!-- Seat Grid -->
+      <div class="seat-grid-area">
+        <div id="seatGrid">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Booking Summary Panel -->
+    <div class="booking-panel">
+      <div class="card">
+        <div class="booking-panel-title">
+          <i class="fas fa-receipt" style="color:var(--accent)"></i> Booking Summary
+        </div>
+
+        <!-- Event Mini Summary -->
+        <div class="event-summary-mini">
+          <div class="thumb-placeholder"
+               id="panelThumb"
+               style="background:rgba(249,115,22,0.1)">
+            <span id="panelEventIcon">🎬</span>
+          </div>
+          <div>
+            <h4 id="panelEventName">Event Name</h4>
+            <p id="panelEventMeta" class="muted text-sm"></p>
+          </div>
+        </div>
+
+        <!-- Selected Seats -->
+        <div class="selected-seats-wrap">
+          <div class="selected-seats-label">Selected Seats</div>
+          <div id="selectedSeatsList" class="selected-seats-list">
+            <span class="seat-placeholder">No seats selected</span>
+          </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="price-breakdown">
+          <div class="price-row">
+            <span>Subtotal</span>
+            <span id="priceSubtotal">₹0</span>
+          </div>
+          <div class="price-row">
+            <span>Convenience Fee</span>
+            <span id="priceConvenience">₹0</span>
+          </div>
+          <div class="price-row">
+            <span>GST (18%)</span>
+            <span id="priceGST">₹0</span>
+          </div>
+          <div class="price-row total">
+            <span>Total</span>
+            <span id="priceTotal">₹0</span>
+          </div>
+        </div>
+
+        <button id="confirmBookingBtn"
+                class="btn btn-secondary btn-full btn-lg"
+                disabled
+                onclick="openBookingModal()">
+          <i class="fas fa-lock"></i> Proceed to Pay
+        </button>
+
+        <p class="text-xs muted mt-2" style="text-align:center">
+          <i class="fas fa-shield-alt"></i> Secured by FRIBS Fraud Shield
+        </p>
+      </div>
+
+      <!-- Fraud Warning hint -->
+      <div style="margin-top:1rem;padding:.9rem 1rem;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-md);font-size:.8rem;color:var(--text-secondary)">
+        <i class="fas fa-eye" style="color:var(--warning)"></i>
+        <strong style="color:var(--warning)"> AI Monitoring Active</strong><br/>
+        Your session is being monitored to prevent fraudulent activity.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 FRIBS — Fraud-Resistant Intelligent Booking System</p>
+  </footer>
+</div>
+
+
+<!-- ============================================================
+     PAGE 5: BOOKING CONFIRMATION
+     ============================================================ -->
+<div id="confirmPage" class="confirm-page">
+  <div class="card confirm-card fade-up">
+    <div class="confirm-icon-wrap">🎉</div>
+    <h2 class="confirm-title">Booking Confirmed!</h2>
+    <p class="confirm-subtitle">Your tickets have been secured. Check your email for details.</p>
+
+    <!-- Ticket -->
+    <div class="ticket">
+      <div class="ticket-header">
+        <span class="ticket-header-icon" id="confEventIcon">🎬</span>
+        <div>
+          <div class="ticket-event-name" id="confEventName">Event Name</div>
+          <div class="ticket-event-type" id="confEventType">Type</div>
+        </div>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-field">
+          <label>Booking ID</label>
+          <span id="confBookingId">—</span>
+        </div>
+        <div class="ticket-field">
+          <label>Passenger / Name</label>
+          <span id="confName">—</span>
+        </div>
+        <div class="ticket-field">
+          <label>Date</label>
+          <span id="confDate">—</span>
+        </div>
+        <div class="ticket-field">
+          <label>Time</label>
+          <span id="confTime">—</span>
+        </div>
+        <div class="ticket-field full">
+          <label>Venue / Location</label>
+          <span id="confLocation">—</span>
+        </div>
+        <div class="ticket-field full">
+          <label>Seat Numbers</label>
+          <span id="confSeats">—</span>
+        </div>
+        <div class="ticket-field">
+          <label>Amount Paid</label>
+          <span id="confTotal" style="color:var(--accent);font-size:1.1rem">—</span>
+        </div>
+        <div class="ticket-field">
+          <label>Payment Status</label>
+          <span id="confStatus">—</span>
+        </div>
+      </div>
+      <div class="ticket-qr">
+        <div class="qr-box" title="Scan QR at venue">
+          <!-- Mini QR pattern approximation -->
+          <svg width="50" height="50" viewBox="0 0 10 10">
+            <rect x="0" y="0" width="4" height="4" fill="#000"/>
+            <rect x="1" y="1" width="2" height="2" fill="#fff"/>
+            <rect x="6" y="0" width="4" height="4" fill="#000"/>
+            <rect x="7" y="1" width="2" height="2" fill="#fff"/>
+            <rect x="0" y="6" width="4" height="4" fill="#000"/>
+            <rect x="1" y="7" width="2" height="2" fill="#fff"/>
+            <rect x="5" y="5" width="1" height="1" fill="#000"/>
+            <rect x="7" y="5" width="1" height="1" fill="#000"/>
+            <rect x="6" y="6" width="1" height="1" fill="#000"/>
+            <rect x="8" y="7" width="2" height="1" fill="#000"/>
+            <rect x="5" y="8" width="1" height="2" fill="#000"/>
+            <rect x="7" y="9" width="3" height="1" fill="#000"/>
+          </svg>
+        </div>
+        <div>
+          <div class="qr-info">Scan at entry gate</div>
+          <div class="qr-id" id="confQrId">BKG0000</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button class="btn btn-secondary btn-full" onclick="navigateTo('myBookingsPage'); renderMyBookings()">
+        <i class="fas fa-ticket-alt"></i> My Bookings
+      </button>
+      <button class="btn btn-primary btn-full" onclick="navigateTo('homePage'); renderEvents()">
+        <i class="fas fa-home"></i> Back to Home
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     PAGE 6: MY BOOKINGS
+     ============================================================ -->
+<div id="myBookingsPage" class="my-bookings-page">
+
+  <div class="page-header">
+    <button class="back-btn" onclick="navigateTo('homePage'); renderEvents()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div class="page-header-info">
+      <h2>My Bookings</h2>
+      <p class="muted">Your booking history</p>
+    </div>
+  </div>
+
+  <div class="my-bookings-inner">
+    <div id="myBookingsList">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 FRIBS — Fraud-Resistant Intelligent Booking System</p>
+  </footer>
+</div>
+
+
+<!-- ============================================================
+     PAGE 7: ADMIN DASHBOARD
+     ============================================================ -->
+<div id="adminPage" class="admin-page">
+
+  <div class="admin-inner">
+    <!-- Admin Header -->
+    <div class="admin-header">
+      <div>
+        <h2><i class="fas fa-shield-alt" style="color:var(--accent)"></i> Admin Dashboard</h2>
+        <p class="muted text-sm" style="margin-top:.25rem">Real-time fraud monitoring &amp; booking analytics</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="renderAdminDashboard(); showToast('info','Refreshed','Data updated')">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="showToast('warning','Scan Running','Fraud scan initiated…')">
+          <i class="fas fa-search"></i> Run Fraud Scan
+        </button>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid" id="adminStats">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-section">
+      <div class="table-section-header">
+        <h3><i class="fas fa-users" style="color:var(--accent)"></i> User Monitoring</h3>
+        <span class="text-xs muted">Suspicious rows highlighted in red</span>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>User ID</th>
+                <th>Bookings</th>
+                <th>Fraud Flag</th>
+                <th>Last Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log Table -->
+    <div class="table-section">
+      <div class="table-section-header">
+        <h3><i class="fas fa-list-alt" style="color:var(--info)"></i> Activity Log</h3>
+        <span class="text-xs muted">Live event stream</span>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>User ID</th>
+                <th>Action</th>
+                <th>IP Address</th>
+              </tr>
+            </thead>
+            <tbody id="activityLogBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin-inner -->
+
+  <footer>
+    <p>© 2025 FRIBS — Admin Panel &nbsp;|&nbsp; All rights reserved</p>
+  </footer>
+</div>
+
+
+<!-- ============================================================
+     JS: Show/hide navbar depending on page
+     ============================================================ -->
+<script>
+  // Show navbar on all pages except login/register
+  const _origNavigateTo = navigateTo;
+  // Override after DOMContentLoaded
+</script>
+
+<!-- Application JavaScript -->
+<script src="js/app.js"></script>
+
+<script>
+  // Override navigateTo to control navbar visibility
+  (function () {
+    const _orig = navigateTo;
+    window.navigateTo = function (pageId) {
+      _orig(pageId);
+      const noNav = ['loginPage', 'registerPage'];
+      const nav   = document.getElementById('mainNav');
+      if (nav) nav.style.display = noNav.includes(pageId) ? 'none' : 'flex';
+    };
+  })();
+</script>
+
+</body>
+</html>
