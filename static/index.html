@@ -16,6 +16,11 @@
 
   <!-- Application Styles -->
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .landing-page:not(.active) {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
 
@@ -98,14 +103,37 @@
 
 
 <!-- ============================================================
-     PAGE 1: LOGIN
+     PAGE 0: LANDING
      ============================================================ -->
-<div id="loginPage" class="auth-page">
-  <div class="card auth-card fade-up">
+<div id="landingPage" class="landing-page active">
+  <div class="hero-banner" style="height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+    <div class="hero-content fade-up">
+      <div class="hero-tag"><i class="fas fa-shield-alt"></i> Intelligent Security</div>
+      <h1 class="hero-title">Welcome to <br/><span>FRIBS</span></h1>
+      <p class="hero-subtitle">The Fraud-Resistant Intelligent Booking System protecting your transactions in real-time.</p>
+      <button class="btn btn-primary btn-lg" style="margin-top: 2rem;" onclick="navigateTo('loginPage')">
+        Get Started <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE 1: LOGIN (Now Modal)
+     ============================================================ -->
+<div id="loginPage" class="modal-overlay">
+  <div class="modal auth-card fade-up" style="position:relative; width:90%; max-width:420px; padding:2.5rem; border-radius:1rem;">
+    <button class="modal-close" onclick="navigateTo('landingPage')" style="position: absolute; top: 1rem; right: 1.5rem; background:transparent; border:none; font-size: 1.5rem; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
     <div class="auth-brand">
       <div class="brand-logo">🔐</div>
       <h1>Welcome Back</h1>
       <p>Sign in to your FRIBS account</p>
+    </div>
+
+    <!-- Role Toggle -->
+    <div class="role-toggle" style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem;">
+      <button id="tabUserLogin" class="btn btn-secondary" style="flex:1" onclick="switchLoginTab('user')">User</button>
+      <button id="tabAdminLogin" class="btn btn-outline" style="flex:1; background:transparent; color:var(--text-primary); border:1px solid var(--card-border)" onclick="switchLoginTab('admin')">Admin</button>
     </div>
 
     <form id="loginForm" class="auth-form" novalidate>
@@ -115,7 +143,7 @@
         <div class="input-wrap">
           <i class="fas fa-envelope input-icon"></i>
           <input type="email" id="loginEmail" class="form-control"
-                 placeholder="you@example.com" autocomplete="email" />
+                 placeholder="Enter your email" autocomplete="email" />
         </div>
         <span id="loginEmailErr" class="form-error"></span>
       </div>
@@ -134,33 +162,58 @@
         <span id="loginPasswordErr" class="form-error"></span>
       </div>
 
-      <!-- Demo hint -->
-      <div class="form-group">
-        <div class="form-hint" style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.15);padding:.6rem .8rem;border-radius:8px;color:var(--text-secondary)">
-          <i class="fas fa-info-circle" style="color:var(--accent)"></i>
-          <strong style="color:var(--accent)"> Demo:</strong>
-          User: <code>alice@example.com</code> · Admin: <code>bob@example.com</code> · Password: <code>pass123</code>
-        </div>
-      </div>
 
       <button type="submit" class="btn btn-primary btn-full btn-lg">
         <i class="fas fa-sign-in-alt"></i> Sign In
       </button>
     </form>
 
-    <div class="auth-footer">
+    <form id="adminLoginForm" class="auth-form" novalidate style="display:none;">
+      <!-- Admin Email -->
+      <div class="form-group">
+        <label for="adminEmail">Admin Email</label>
+        <div class="input-wrap">
+          <i class="fas fa-shield-alt input-icon"></i>
+          <input type="email" id="adminEmail" class="form-control"
+                 placeholder="Enter admin email" autocomplete="email" />
+        </div>
+        <span id="adminEmailErr" class="form-error"></span>
+      </div>
+
+      <!-- Admin Password -->
+      <div class="form-group">
+        <label for="adminPassword">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="adminPassword" class="form-control"
+                 placeholder="Enter admin password" autocomplete="current-password" />
+          <button type="button" class="toggle-pw" onclick="togglePassword('adminPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <span id="adminPasswordErr" class="form-error"></span>
+      </div>
+
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg">
+        <i class="fas fa-sign-in-alt"></i> Admin Sign In
+      </button>
+    </form>
+
+    <div class="auth-footer" id="loginRouteFooter">
       Don't have an account?
-      <a href="#" onclick="navigateTo('registerPage')">Create one</a>
+      <a href="#" onclick="navigateTo('registerPage');">Create one</a>
     </div>
   </div>
 </div>
 
 
 <!-- ============================================================
-     PAGE 2: REGISTER
+     PAGE 2: REGISTER (Now Modal)
      ============================================================ -->
-<div id="registerPage" class="auth-page">
-  <div class="card auth-card fade-up">
+<div id="registerPage" class="modal-overlay">
+  <div class="modal auth-card fade-up" style="position:relative; width:90%; max-width:420px; padding:2.5rem; border-radius:1rem;">
+    <button class="modal-close" onclick="navigateTo('landingPage')" style="position: absolute; top: 1rem; right: 1.5rem; background:transparent; border:none; font-size: 1.5rem; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
     <div class="auth-brand">
       <div class="brand-logo">✨</div>
       <h1>Create Account</h1>
@@ -185,7 +238,7 @@
         <div class="input-wrap">
           <i class="fas fa-envelope input-icon"></i>
           <input type="email" id="regEmail" class="form-control"
-                 placeholder="you@example.com" autocomplete="email" />
+                 placeholder="Enter your email" autocomplete="email" />
         </div>
         <span id="regEmailErr" class="form-error"></span>
       </div>
@@ -229,7 +282,7 @@
 
     <div class="auth-footer">
       Already have an account?
-      <a href="#" onclick="navigateTo('loginPage')">Sign in</a>
+      <a href="#" onclick="navigateTo('loginPage');">Sign in</a>
     </div>
   </div>
 </div>
@@ -245,7 +298,7 @@
     <div class="hero-content">
       <div class="hero-tag"><i class="fas fa-shield-alt"></i> Fraud-Resistant Booking</div>
       <h1 class="hero-title">Book Your Next<br/><span>Experience</span></h1>
-      <p class="hero-subtitle">Movies, concerts, flights and more — secured by intelligent fraud detection.</p>
+      <p class="hero-subtitle">Movies, concerts, sports and more — secured by intelligent fraud detection.</p>
     </div>
   </div>
 
@@ -260,9 +313,7 @@
     <button class="filter-tab" data-filter="concert">
       🎵 Concerts
     </button>
-    <button class="filter-tab" data-filter="flight">
-      ✈️ Flights
-    </button>
+
     <button class="filter-tab" data-filter="sports">
       🏏 Sports
     </button>
@@ -546,10 +597,13 @@
         <p class="muted text-sm" style="margin-top:.25rem">Real-time fraud monitoring &amp; booking analytics</p>
       </div>
       <div class="flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="openAuthModal('createEventModal')">
+          <i class="fas fa-plus"></i> Create Event
+        </button>
         <button class="btn btn-secondary btn-sm" onclick="renderAdminDashboard(); showToast('info','Refreshed','Data updated')">
           <i class="fas fa-sync-alt"></i> Refresh
         </button>
-        <button class="btn btn-danger btn-sm" onclick="showToast('warning','Scan Running','Fraud scan initiated…')">
+        <button class="btn btn-danger btn-sm" onclick="runFraudScan()">
           <i class="fas fa-search"></i> Run Fraud Scan
         </button>
       </div>
@@ -621,6 +675,84 @@
 
 
 <!-- ============================================================
+     CREATE EVENT MODAL (Admin action)
+     ============================================================ -->
+<div id="createEventModal" class="modal-overlay">
+  <div class="modal auth-card fade-up" style="position:relative; width:90%; max-width:500px; padding:2.5rem; border-radius:1rem;">
+    <button class="modal-close" onclick="closeAuthModal('createEventModal')" style="position: absolute; top: 1rem; right: 1.5rem; background:transparent; border:none; font-size: 1.5rem; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+    <div class="auth-brand" style="text-align: left; margin-bottom: 1.5rem;">
+      <h2>Create New Event</h2>
+      <p class="muted text-sm">Fill in the details to publish a new event.</p>
+    </div>
+    
+    <form id="createEventForm" onsubmit="handleCreateEvent(event)">
+      <div class="form-group">
+        <label>Event Name</label>
+        <input type="text" id="ceName" class="form-control" placeholder="e.g. Summer Music Festival" required />
+      </div>
+      <div class="form-group">
+        <label>Venue</label>
+        <input type="text" id="ceVenue" class="form-control" placeholder="e.g. Grand Arena" required />
+      </div>
+      <div class="form-group" style="display:flex; gap:1rem;">
+        <div style="flex:1;">
+          <label>Date</label>
+          <input type="date" id="ceDate" class="form-control" required />
+        </div>
+        <div style="flex:1;">
+          <label>Time</label>
+          <input type="time" id="ceTime" class="form-control" required />
+        </div>
+      </div>
+      <div class="form-group" style="display:flex; gap:1rem;">
+        <div style="flex:1;">
+          <label>Event Type</label>
+          <select id="ceType" class="form-control" required style="cursor:pointer; background:var(--bg-card); color:var(--text-primary); border: 1px solid var(--input-border); border-radius: var(--radius-md); padding-left: 1rem;">
+            <option value="Movie">Movie 🎬</option>
+            <option value="Concert">Concert 🎵</option>
+            <option value="Comedy">Comedy 😂</option>
+            <option value="Sports">Sports 🏏</option>
+            <option value="Theater">Theater 🎭</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label>Price (₹)</label>
+          <input type="number" id="cePrice" class="form-control" value="350" required min="0" />
+        </div>
+      </div>
+      <p id="ceError" class="form-error" style="display:none; color:var(--danger); margin-bottom:1rem;"></p>
+      <button type="submit" class="btn btn-primary btn-full btn-lg">Publish Event</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     USER LOGS MODAL (Admin action)
+     ============================================================ -->
+<div id="userLogsModal" class="modal-overlay">
+  <div class="modal auth-card fade-up" style="position:relative; width:90%; max-width:600px; padding:2.5rem; border-radius:1rem; max-height:80vh; overflow-y:auto;">
+    <button class="modal-close" onclick="closeAuthModal('userLogsModal')" style="position: absolute; top: 1rem; right: 1.5rem; background:transparent; border:none; font-size: 1.5rem; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+    <div class="auth-brand" style="text-align: left; margin-bottom: 1.5rem;">
+      <h2 id="userLogsTitle">User Logs</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="text-align: left; border-bottom: 1px solid var(--card-border);">
+            <th style="padding: 0.8rem; color: var(--text-secondary); font-size: 0.85rem;">Time</th>
+            <th style="padding: 0.8rem; color: var(--text-secondary); font-size: 0.85rem;">Status</th>
+            <th style="padding: 0.8rem; color: var(--text-secondary); font-size: 0.85rem;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="userLogsBody">
+          <!-- Logs injected here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
      JS: Show/hide navbar depending on page
      ============================================================ -->
 <script>
@@ -638,9 +770,8 @@
     const _orig = navigateTo;
     window.navigateTo = function (pageId) {
       _orig(pageId);
-      const noNav = ['loginPage', 'registerPage'];
       const nav   = document.getElementById('mainNav');
-      if (nav) nav.style.display = noNav.includes(pageId) ? 'none' : 'flex';
+      if (nav) nav.style.display = (pageId === 'landingPage') ? 'none' : 'flex';
     };
   })();
 </script>

@@ -18,27 +18,11 @@ def get_db_connection():
 # Serve static files (Frontend)
 @app.route('/')
 def serve_landing():
-    return send_from_directory('static', 'landing.html')
-
-@app.route('/dashboard')
-def serve_dashboard():
     return send_from_directory('static', 'index.html')
-
-@app.route('/admin')
-def serve_admin():
-    return send_from_directory('static', 'admin.html')
 
 @app.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
-
-@app.route('/login')
-def serve_login():
-    return send_from_directory('static', 'login.html')
-
-@app.route('/signup')
-def serve_signup():
-    return send_from_directory('static', 'signup.html')
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -72,6 +56,48 @@ def api_login():
             
         return jsonify({
             "message": "Login successful",
+            "user": user
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+@app.route('/api/admin/login', methods=['POST'])
+def api_admin_login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password required"}), 400
+        
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed."}), 500
+        
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id, name, email, account_status, password FROM Users WHERE email = ?", (email,))
+        user_row = cursor.fetchone()
+        
+        if not user_row:
+            return jsonify({"error": "No account found."}), 404
+            
+        user = dict(user_row)
+        
+        if user['password'] != password:
+            return jsonify({"error": "Incorrect password."}), 401
+            
+        if 'admin' not in user['email'].lower():
+            return jsonify({"error": "Unauthorized. Admin privileges required."}), 403
+            
+        del user['password']
+            
+        return jsonify({
+            "message": "Admin login successful",
             "user": user
         }), 200
     except Exception as e:
@@ -161,9 +187,9 @@ def book_seat():
     data = request.json
     user_id = data.get('user_id')
     event_id = data.get('event_id')
-    seat_id = data.get('seat_id')
+    seat_numbers = data.get('seats')
 
-    if not all([user_id, event_id, seat_id]):
+    if not all([user_id, event_id, seat_numbers]) or not isinstance(seat_numbers, list):
         return jsonify({"error": "Missing required fields"}), 400
 
     conn = get_db_connection()
@@ -188,28 +214,28 @@ def book_seat():
             conn.rollback()
             return jsonify({"error": "User account is blocked. Booking denied."}), 403
 
-        # 2. Concurrency Control - SQLite uses file-level locks during write transactions.
-        # So we query it normally, but the BEGIN TRANSACTION protects against race conditions here.
-        cursor.execute("SELECT status FROM Seats WHERE seat_id = ? AND event_id = ?", (seat_id, event_id))
-        seat_row = cursor.fetchone()
-        
-        if not seat_row:
-            conn.rollback()
-            return jsonify({"error": "Seat not found for the given event"}), 404
+        # 2. Concurrency Control and Insert/Update Seats
+        for seat_number in seat_numbers:
+            cursor.execute("SELECT seat_id, status FROM Seats WHERE seat_number = ? AND event_id = ?", (seat_number, event_id))
+            seat_row = cursor.fetchone()
             
-        seat = dict(seat_row)
-        if seat['status'] == 'Booked':
-            conn.rollback()
-            return jsonify({"error": "Seat is already booked!"}), 409
+            if seat_row:
+                seat = dict(seat_row)
+                if seat['status'] == 'Booked':
+                    conn.rollback()
+                    return jsonify({"error": f"Seat {seat_number} is already booked!"}), 409
+                
+                seat_id = seat['seat_id']
+                cursor.execute("UPDATE Seats SET status = 'Booked' WHERE seat_id = ?", (seat_id,))
+            else:
+                cursor.execute("INSERT INTO Seats (event_id, seat_number, status) VALUES (?, ?, 'Booked')", (event_id, seat_number))
+                seat_id = cursor.lastrowid
             
-        # 3. Update seat status to Booked
-        cursor.execute("UPDATE Seats SET status = 'Booked' WHERE seat_id = ?", (seat_id,))
-        
-        # 4. Insert booking record
-        cursor.execute(
-            "INSERT INTO Bookings (user_id, event_id, seat_id, booking_status) VALUES (?, ?, ?, 'Confirmed')", 
-            (user_id, event_id, seat_id)
-        )
+            # 3. Insert booking record
+            cursor.execute(
+                "INSERT INTO Bookings (user_id, event_id, seat_id, booking_status) VALUES (?, ?, ?, 'Confirmed')", 
+                (user_id, event_id, seat_id)
+            )
         
         # Commit Transaction
         conn.commit()
@@ -246,6 +272,69 @@ def get_fraud_logs():
         cursor.close()
         conn.close()
 
+@app.route('/api/users', methods=['GET'])
+def get_all_users():
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed."}), 500
+        
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT u.user_id, u.name, u.email, u.account_status,
+                   (SELECT COUNT(*) FROM Bookings b WHERE b.user_id = u.user_id) as total_bookings,
+                   (SELECT MAX(timestamp) FROM Activity_logs a WHERE a.user_id = u.user_id) as last_activity
+            FROM Users u
+        """)
+        users = [dict(row) for row in cursor.fetchall()]
+        return jsonify(users)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/bookings/<int:user_id>', methods=['GET'])
+def get_user_bookings(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed."}), 500
+        
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT b.booking_id, b.event_id, b.booking_status, b.booking_time, s.seat_number, e.event_name
+            FROM Bookings b
+            JOIN Seats s ON b.seat_id = s.seat_id
+            JOIN Events e ON b.event_id = e.event_id
+            WHERE b.user_id = ?
+        """, (user_id,))
+        
+        raw_bookings = cursor.fetchall()
+        
+        # Group seats by event and booking time (or just event if user booked the same event multiple times, 
+        # but to keep it simple, we group by event_id for the UI representation)
+        grouped_bookings = {}
+        for row in raw_bookings:
+            k = row['event_id']
+            if k not in grouped_bookings:
+                grouped_bookings[k] = {
+                    'booking_id': row['booking_id'],
+                    'event_id': row['event_id'],
+                    'event_name': row['event_name'],
+                    'status': row['booking_status'],
+                    'date': row['booking_time'],
+                    'seats': []
+                }
+            grouped_bookings[k]['seats'].append(row['seat_number'])
+            
+        return jsonify(list(grouped_bookings.values()))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/block', methods=['POST'])
 def block_user():
     data = request.json
@@ -269,6 +358,118 @@ def block_user():
         conn.commit()
         
         return jsonify({"message": f"User {user_id} blocked successfully"}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/unblock', methods=['POST'])
+def unblock_user():
+    data = request.json
+    user_id = data.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+        
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed."}), 500
+        
+    try:
+        cursor = conn.cursor()
+        
+        # Admin Action
+        cursor.execute("UPDATE Users SET account_status = 'Active' WHERE user_id = ?", (user_id,))
+        cursor.execute("INSERT INTO Activity_logs (user_id, action, status) VALUES (?, ?, ?)", 
+            (user_id, 'Admin unblocked user account', 'System Action'))
+        
+        conn.commit()
+        
+        return jsonify({"message": f"User {user_id} unblocked successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/admin/events', methods=['POST'])
+def create_event():
+    data = request.json
+    name = data.get('name')
+    venue = data.get('venue')
+    date = data.get('date')
+    time = data.get('time')
+    event_type = data.get('type')
+    price = data.get('price')
+
+    if not all([name, venue, date, time, event_type, price]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed."}), 500
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("BEGIN TRANSACTION")
+
+        cursor.execute(
+            "INSERT INTO Events (event_name, venue, event_date, event_time, event_type, price) VALUES (?, ?, ?, ?, ?, ?)",
+            (name, venue, date, time, event_type, price)
+        )
+        new_event_id = cursor.lastrowid
+
+        # Auto-provision 100 seats (e.g. Rows A-J, Cols 1-10)
+        rows = ['A','B','C','D','E','F','G','H','I','J']
+        seat_data = []
+        for r in rows:
+            for c in range(1, 11):
+                seat_data.append((new_event_id, f"{r}{c}"))
+        
+        cursor.executemany("INSERT INTO Seats (event_id, seat_number) VALUES (?, ?)", seat_data)
+
+        conn.commit()
+        return jsonify({"message": "Event published successfully!", "event_id": new_event_id}), 201
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/admin/scan', methods=['POST'])
+def run_fraud_scan():
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed."}), 500
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("BEGIN TRANSACTION")
+        
+        # Find users with > 10 bookings who are not yet blocked
+        cursor.execute("""
+            SELECT u.user_id 
+            FROM Users u
+            WHERE u.account_status != 'Blocked'
+            AND (SELECT COUNT(*) FROM Bookings b WHERE b.user_id = u.user_id) > 10
+        """)
+        suspicious_users = cursor.fetchall()
+
+        blocked_count = 0
+        for row in suspicious_users:
+            uid = row['user_id']
+            cursor.execute("UPDATE Users SET account_status = 'Blocked' WHERE user_id = ?", (uid,))
+            cursor.execute("INSERT INTO Activity_logs (user_id, action, status) VALUES (?, ?, ?)", 
+                (uid, 'Auto-blocked by System Fraud Scan (> 10 bookings)', 'System Action'))
+            blocked_count += 1
+            
+        conn.commit()
+        return jsonify({"message": "Fraud scan complete", "blocked_count": blocked_count}), 200
+
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500
@@ -329,26 +530,38 @@ def init_db():
         );
     """)
 
+    # Attempt to safely add missing columns if upgrading schema without losing data
+    try:
+        cursor.execute("ALTER TABLE Events ADD COLUMN event_type VARCHAR(50) DEFAULT 'Movie'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute("ALTER TABLE Events ADD COLUMN price INTEGER DEFAULT 350")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     # Create Trigger for Fraud Detection
     # SQLite triggers syntax is slightly different than MySQL
     cursor.executescript("""
-        CREATE TRIGGER IF NOT EXISTS After_Booking_Insert
+        DROP TRIGGER IF EXISTS After_Booking_Insert;
+        
+        CREATE TRIGGER After_Booking_Insert
         AFTER INSERT ON Bookings
         BEGIN
             -- Log normal activity
             INSERT INTO Activity_logs (user_id, action, status) 
             VALUES (NEW.user_id, 'Booked seat ' || NEW.seat_id || ' for event ' || NEW.event_id, 'Normal');
             
-            -- Check for fraud: update user status and log if there are >5 bookings in the last 1 minute
-            -- In SQLite, we can use an INSERT and UPDATE statement dependent on a subquery
+            -- Check for fraud: update user status to Blocked and log if there are >5 bookings in the last 1 minute
             INSERT INTO Activity_logs (user_id, action, status)
-            SELECT NEW.user_id, 'Excessive bookings in 1 minute', 'Suspicious'
+            SELECT NEW.user_id, 'Excessive bookings in 1 minute - Auto Blocked', 'Suspicious'
             WHERE (
                 SELECT COUNT(*) FROM Activity_logs 
                 WHERE user_id = NEW.user_id AND action LIKE 'Booked seat%' AND timestamp >= datetime('now', '-1 minute')
             ) > 5;
             
-            UPDATE Users SET account_status = 'Suspicious'
+            UPDATE Users SET account_status = 'Blocked'
             WHERE user_id = NEW.user_id AND (
                 SELECT COUNT(*) FROM Activity_logs 
                 WHERE user_id = NEW.user_id AND action LIKE 'Booked seat%' AND timestamp >= datetime('now', '-1 minute')

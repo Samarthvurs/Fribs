@@ -12,111 +12,11 @@ const App = {
   selectedEvent: null,
   selectedSeats: [],
   lastBooking: null,
-
-  // Mock user database
-  users: [
-    { id: 'USR001', name: 'Alice Johnson', email: 'alice@example.com', password: 'pass123', role: 'user'  },
-    { id: 'USR002', name: 'Bob Kumar',     email: 'bob@example.com',   password: 'pass123', role: 'admin' },
-  ],
-
-  // Mock events data
-  events: [
-    {
-      id: 'EVT001', type: 'Movie', icon: '🎬',
-      title: 'Dune: Part Three',
-      date: 'Sat, Apr 12, 2025', time: '7:30 PM',
-      location: 'PVR IMAX, Bangalore',
-      price: 350, vipPrice: 650,
-      badge: 'trending',
-      color: '#c2540a',
-      totalSeats: 80, bookedSeats: ['A3','A4','B1','B6','C2','C3','D5','D8','E1','E9'],
-    },
-    {
-      id: 'EVT002', type: 'Concert', icon: '🎵',
-      title: 'Coldplay: Music of the Spheres',
-      date: 'Sun, Apr 20, 2025', time: '6:00 PM',
-      location: 'DY Patil Stadium, Mumbai',
-      price: 2500, vipPrice: 8000,
-      badge: 'hot',
-      color: '#1d4ed8',
-      totalSeats: 60, bookedSeats: ['A1','A2','A3','B4','B5','C6','C7','D1','D2'],
-    },
-    {
-      id: 'EVT003', type: 'Flight', icon: '✈️',
-      title: 'BLR → DEL — IndiGo 6E-201',
-      date: 'Fri, Apr 18, 2025', time: '9:15 AM',
-      location: 'Kempegowda Intl, Bangalore',
-      price: 4299, vipPrice: 9999,
-      badge: null,
-      color: '#0f766e',
-      totalSeats: 50, bookedSeats: ['1A','1B','2C','3D','4A','4B','5C','6D'],
-    },
-    {
-      id: 'EVT004', type: 'Comedy', icon: '😂',
-      title: 'Zakir Khan: Haq Se Single',
-      date: 'Wed, Apr 23, 2025', time: '8:00 PM',
-      location: 'Chowdiah Memorial Hall, BLR',
-      price: 799, vipPrice: 1500,
-      badge: 'selling fast',
-      color: '#7c3aed',
-      totalSeats: 70, bookedSeats: ['A5','A6','B2','B3','C4','C5'],
-    },
-    {
-      id: 'EVT005', type: 'Sports', icon: '🏏',
-      title: 'IPL: RCB vs CSK',
-      date: 'Sat, Apr 26, 2025', time: '3:30 PM',
-      location: 'M. Chinnaswamy Stadium, BLR',
-      price: 999, vipPrice: 3500,
-      badge: 'trending',
-      color: '#991b1b',
-      totalSeats: 90, bookedSeats: ['B1','B2','B3','C4','C5','D6','D7','E8','E9'],
-    },
-    {
-      id: 'EVT006', type: 'Theater', icon: '🎭',
-      title: 'Hamlet — NSD Repertory',
-      date: 'Thu, Apr 17, 2025', time: '6:30 PM',
-      location: 'Ranga Shankara, Bangalore',
-      price: 450, vipPrice: 850,
-      badge: null,
-      color: '#854d0e',
-      totalSeats: 48, bookedSeats: ['A1','A2','C3','C4'],
-    },
-  ],
-
-  // Mock booking history
-  bookings: [
-    {
-      id: 'BKG8821', eventId: 'EVT001', userId: 'USR001',
-      seats: ['C5','C6'], total: 700, status: 'paid',
-      date: 'Mar 10, 2025',
-    },
-    {
-      id: 'BKG7743', eventId: 'EVT004', userId: 'USR001',
-      seats: ['D3'], total: 799, status: 'paid',
-      date: 'Mar 5, 2025',
-    },
-  ],
-
-  // Mock admin data
-  adminUsers: [
-    { id:'USR001', name:'Alice Johnson',  email:'alice@example.com',   bookings:14, flag: 'safe',    lastActivity:'2m ago'  },
-    { id:'USR003', name:'Riya Sharma',    email:'riya@domain.com',     bookings:2,  flag: 'safe',    lastActivity:'1h ago'  },
-    { id:'USR004', name:'Unknown Device', email:'temp_usr@proxy.xyz',  bookings:87, flag: 'danger',  lastActivity:'5s ago'  },
-    { id:'USR005', name:'Carlos M.',      email:'carlos@example.com',  bookings:31, flag: 'warning', lastActivity:'15m ago' },
-    { id:'USR006', name:'Script Bot',     email:'bot_447@tempmail.net',bookings:203,flag: 'danger',  lastActivity:'2s ago'  },
-    { id:'USR007', name:'Priya T.',       email:'priya@mail.com',      bookings:7,  flag: 'safe',    lastActivity:'3h ago'  },
-  ],
-
-  activityLog: [
-    { time:'09:41:02', user:'USR006', action:'Bulk seat hold — 22 seats',  type:'danger',  ip:'104.28.9.12'  },
-    { time:'09:40:55', user:'USR004', action:'Rapid checkout attempt x5',  type:'danger',  ip:'185.220.101.4'},
-    { time:'09:40:30', user:'USR005', action:'Multiple IP logins detected', type:'warn',   ip:'52.14.88.201' },
-    { time:'09:38:11', user:'USR001', action:'Booking confirmed BKG8821',   type:'success', ip:'106.51.2.88'  },
-    { time:'09:37:45', user:'USR003', action:'Seat selection EVT002',       type:'info',    ip:'49.207.4.11'  },
-    { time:'09:35:22', user:'USR006', action:'Account created (disposable)',type:'danger',  ip:'104.28.9.12'  },
-    { time:'09:34:00', user:'USR007', action:'Login successful',            type:'info',    ip:'103.21.1.44'  },
-    { time:'09:32:10', user:'USR004', action:'Payment method changed x3',   type:'warn',   ip:'185.220.101.4'},
-  ],
+  _currentTotal: 0,
+  events: [],
+  bookings: [],
+  adminUsers: [],
+  activityLog: []
 };
 
 
@@ -127,7 +27,7 @@ const App = {
 /** Navigate to a specific page by its ID */
 function navigateTo(pageId) {
   // Hide all pages
-  document.querySelectorAll('.page, .auth-page, .dashboard-page, .seat-page, .confirm-page, .admin-page, .my-bookings-page')
+  document.querySelectorAll('.page, .auth-page, .dashboard-page, .seat-page, .confirm-page, .admin-page, .my-bookings-page, .landing-page, .modal-overlay')
     .forEach(p => p.classList.remove('active'));
 
   // Show target
@@ -151,7 +51,7 @@ function setNavActive(section) {
    ============================================================ */
 
 /** Handle login form submission */
-function handleLogin(e) {
+async function handleLogin(e) {
   e.preventDefault();
   const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -164,36 +64,103 @@ function handleLogin(e) {
 
   if (!valid) return;
 
-  // Find user
-  const user = App.users.find(u => u.email === email && u.password === password);
-
-  if (!user) {
-    showError('loginPasswordErr', 'Invalid email or password');
-    shakeElement(document.getElementById('loginForm'));
-    return;
-  }
-
-  // Login success
-  App.currentUser = user;
-  updateNavUser();
-
-  showToast('success', 'Welcome back!', `Logged in as ${user.name}`);
-  showSpinner('Signing you in…');
-
-  setTimeout(() => {
-    hideSpinner();
-    if (user.role === 'admin') {
-      navigateTo('adminPage');
-      renderAdminDashboard();
-    } else {
-      navigateTo('homePage');
-      renderEvents();
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    
+    if (!res.ok) {
+        showError('loginPasswordErr', data.error || 'Invalid email or password');
+        shakeElement(document.getElementById('loginForm'));
+        return;
     }
-  }, 1200);
+
+    const { user } = data;
+    App.currentUser = {
+        id: user.user_id,
+        name: user.name,
+        email: user.email,
+        status: user.account_status,
+        role: user.email.includes('admin') ? 'admin' : 'user'
+    };
+    updateNavUser();
+
+    showToast('success', 'Welcome back!', `Logged in as ${user.name}`);
+    showSpinner('Signing you in…');
+
+    setTimeout(() => {
+      hideSpinner();
+      if (App.currentUser.role === 'admin') {
+        navigateTo('adminPage');
+        renderAdminDashboard();
+      } else {
+        navigateTo('homePage');
+        renderEvents();
+      }
+    }, 1200);
+  } catch (err) {
+      showError('loginPasswordErr', 'Network error');
+  }
 }
 
+/** Handle admin login form submission */
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const email    = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+
+  clearErrors('adminLoginForm');
+  let valid = true;
+
+  if (!email)    { showError('adminEmailErr', 'Email is required');       valid = false; }
+  if (!password) { showError('adminPasswordErr', 'Password is required'); valid = false; }
+
+  if (!valid) return;
+
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    
+    if (!res.ok) {
+        showError('adminPasswordErr', data.error || 'Invalid admin credentials');
+        shakeElement(document.getElementById('adminLoginForm'));
+        return;
+    }
+
+    const { user } = data;
+    App.currentUser = {
+        id: user.user_id,
+        name: user.name,
+        email: user.email,
+        status: user.account_status,
+        role: 'admin'
+    };
+    updateNavUser();
+
+    showToast('success', 'Admin Access Granted', `Welcome ${user.name}`);
+    showSpinner('Signing you in…');
+
+    setTimeout(() => {
+      hideSpinner();
+      navigateTo('adminPage');
+      renderAdminDashboard();
+    }, 1200);
+  } catch (err) {
+      showError('adminPasswordErr', 'Network error');
+  }
+}
+
+/** Registration handle */
+
 /** Handle registration form submission */
-function handleRegister(e) {
+async function handleRegister(e) {
   e.preventDefault();
 
   const name     = document.getElementById('regName').value.trim();
@@ -211,29 +178,40 @@ function handleRegister(e) {
 
   if (!valid) return;
 
-  // Check duplicate email
-  if (App.users.find(u => u.email === email)) {
-    showError('regEmailErr', 'Email already registered');
-    return;
+  try {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+    
+    if (!res.ok) {
+        showError('regEmailErr', data.error || 'Registration failed');
+        return;
+    }
+
+    const { user } = data;
+    App.currentUser = {
+        id: user.user_id,
+        name: user.name,
+        email: user.email,
+        status: user.account_status,
+        role: user.email.includes('admin') ? 'admin' : 'user'
+    };
+    updateNavUser();
+
+    showToast('success', 'Account created!', 'Welcome to FRIBS');
+    showSpinner('Setting up your account…');
+
+    setTimeout(() => {
+      hideSpinner();
+      navigateTo('homePage');
+      renderEvents();
+    }, 1500);
+  } catch (err) {
+      showError('regEmailErr', 'Network error');
   }
-
-  // Create user
-  const newUser = {
-    id:   'USR' + Math.floor(Math.random() * 900 + 100),
-    name, email, password, role: 'user',
-  };
-  App.users.push(newUser);
-  App.currentUser = newUser;
-  updateNavUser();
-
-  showToast('success', 'Account created!', 'Welcome to FRIBS');
-  showSpinner('Setting up your account…');
-
-  setTimeout(() => {
-    hideSpinner();
-    navigateTo('homePage');
-    renderEvents();
-  }, 1500);
 }
 
 /** Logout */
@@ -242,7 +220,7 @@ function logout() {
   App.selectedEvent = null;
   App.selectedSeats = [];
   showToast('info', 'Logged out', 'See you next time!');
-  navigateTo('loginPage');
+  navigateTo('landingPage');
   document.getElementById('loginForm').reset();
 }
 
@@ -266,10 +244,39 @@ function updateNavUser() {
    ============================================================ */
 
 /** Render events cards */
-function renderEvents(filter = 'all', query = '') {
+async function renderEvents(filter = 'all', query = '') {
   const grid  = document.getElementById('eventsGrid');
   const count = document.getElementById('eventsCount');
   if (!grid) return;
+
+  if (App.events.length === 0) {
+    try {
+      showSpinner('Loading events...');
+      const res = await fetch('/events');
+      if (res.ok) {
+        const data = await res.json();
+        App.events = data.map(ev => ({
+          id: ev.event_id,
+          type: ev.event_type || 'Movie',
+          icon: typeIcon(ev.event_type || 'Movie'),
+          title: ev.event_name,
+          date: ev.event_date,
+          time: ev.event_time,
+          location: ev.venue,
+          price: parseInt(ev.price) || 350,
+          vipPrice: parseInt(ev.price) || 350 + 300,
+          badge: null,
+          color: '#1d4ed8',
+          totalSeats: 100,
+          bookedSeats: []
+        }));
+      }
+      hideSpinner();
+    } catch (err) {
+      hideSpinner();
+      showToast('error', 'Error', 'Failed to load events');
+    }
+  }
 
   let list = App.events;
 
@@ -335,7 +342,7 @@ function renderEvents(filter = 'all', query = '') {
 /** Return icon for event type */
 function typeIcon(type) {
   const map = {
-    'Movie':'🎬','Concert':'🎵','Flight':'✈️','Comedy':'😂','Sports':'🏏','Theater':'🎭'
+    'Movie':'🎬','Concert':'🎵','Comedy':'😂','Sports':'🏏','Theater':'🎭'
   };
   return map[type] || '🎫';
 }
@@ -346,13 +353,25 @@ function typeIcon(type) {
    ============================================================ */
 
 /** Open seat selection for an event */
-function openSeatSelection(eventId) {
+async function openSeatSelection(eventId) {
   if (!App.currentUser) { navigateTo('loginPage'); return; }
 
-  App.selectedEvent = App.events.find(e => e.id === eventId);
+  App.selectedEvent = App.events.find(e => e.id == eventId);
   App.selectedSeats = [];
 
   if (!App.selectedEvent) return;
+
+  try {
+    showSpinner('Loading seats...');
+    const res = await fetch(`/seats/${eventId}`);
+    if (res.ok) {
+      const seatsData = await res.json();
+      App.selectedEvent.bookedSeats = seatsData.filter(s => s.status === 'Booked').map(s => s.seat_number);
+    }
+    hideSpinner();
+  } catch(err) {
+    hideSpinner();
+  }
 
   renderSeatPage();
   navigateTo('seatPage');
@@ -382,13 +401,7 @@ function renderSeatPage() {
 function renderSeatGrid() {
   const ev     = App.selectedEvent;
   const grid   = document.getElementById('seatGrid');
-  const isFlightType = ev.type === 'Flight';
-
-  if (isFlightType) {
-    renderFlightSeats(grid, ev);
-  } else {
-    renderTheatreSeats(grid, ev);
-  }
+  renderTheatreSeats(grid, ev);
 }
 
 /** Render theatre/event style seats */
@@ -440,45 +453,7 @@ function renderTheatreSeats(grid, ev) {
   grid.innerHTML = html;
 }
 
-/** Render flight-style seats */
-function renderFlightSeats(grid, ev) {
-  const rows  = [1,2,3,4,5,6,7,8,9,10,11,12];
-  const cols  = ['A','B','C','D','E','F'];
-  const bCols = ['A','B','C'];
-  const eCols = ['D','E','F'];
 
-  let html = `<div class="seat-section-label">Economy Class</div>`;
-
-  rows.forEach(row => {
-    html += `<div class="seat-row"><span class="row-label">${row}</span>`;
-
-    bCols.forEach(col => {
-      const seatId = `${row}${col}`;
-      const isBooked   = ev.bookedSeats.includes(seatId);
-      const isSelected = App.selectedSeats.includes(seatId);
-      const cls = isBooked ? 'booked' : isSelected ? 'selected' : 'available';
-      html += `<button class="seat ${cls}" title="${seatId}"
-        data-seat="${seatId}" data-vip="false"
-        ${isBooked ? 'disabled' : `onclick="toggleSeat('${seatId}', this)"`}></button>`;
-    });
-
-    html += `<span class="seat-aisle"></span>`;
-
-    eCols.forEach(col => {
-      const seatId = `${row}${col}`;
-      const isBooked   = ev.bookedSeats.includes(seatId);
-      const isSelected = App.selectedSeats.includes(seatId);
-      const cls = isBooked ? 'booked' : isSelected ? 'selected' : 'available';
-      html += `<button class="seat ${cls}" title="${seatId}"
-        data-seat="${seatId}" data-vip="false"
-        ${isBooked ? 'disabled' : `onclick="toggleSeat('${seatId}', this)"`}></button>`;
-    });
-
-    html += `</div>`;
-  });
-
-  grid.innerHTML = html;
-}
 
 /** Toggle seat selection */
 function toggleSeat(seatId, el) {
@@ -566,15 +541,29 @@ function openBookingModal() {
 }
 
 /** Confirm booking — simulate payment */
-function confirmBooking() {
+async function confirmBooking() {
   document.getElementById('bookingModal').classList.remove('active');
 
   showSpinner('Processing your booking…');
 
-  setTimeout(() => {
+  try {
+    const res = await fetch('/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: App.currentUser.id,
+        event_id: App.selectedEvent.id,
+        seats: App.selectedSeats
+      })
+    });
+    const data = await res.json();
     hideSpinner();
 
-    // Create booking record
+    if (!res.ok) {
+      showToast('error', 'Booking Failed', data.error || 'Could not process booking');
+      return;
+    }
+
     const booking = {
       id:      'BKG' + Math.floor(Math.random() * 9000 + 1000),
       eventId: App.selectedEvent.id,
@@ -588,15 +577,16 @@ function confirmBooking() {
     App.bookings.push(booking);
     App.lastBooking = booking;
 
-    // Mark seats as booked
     App.selectedEvent.bookedSeats.push(...App.selectedSeats);
 
-    // Show confirmation page
     renderConfirmationPage(booking);
     navigateTo('confirmPage');
 
-    showToast('success', 'Booking Confirmed! 🎉', `Booking ID: ${booking.id}`);
-  }, 2200);
+    showToast('success', 'Booking Confirmed! 🎉', `Booking successful`);
+  } catch(err) {
+    hideSpinner();
+    showToast('error', 'Network Error', 'Could not complete booking');
+  }
 }
 
 
@@ -629,11 +619,31 @@ function renderConfirmationPage(booking) {
    ============================================================ */
 
 /** Render the user's booking history */
-function renderMyBookings() {
+async function renderMyBookings() {
   const container = document.getElementById('myBookingsList');
   if (!container) return;
 
-  const userBookings = App.bookings.filter(b => b.userId === App.currentUser?.id);
+  try {
+    showSpinner('Loading bookings...');
+    const res = await fetch(`/api/bookings/${App.currentUser.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      App.bookings = data.map(b => ({
+          id: 'BKG' + b.booking_id,
+          eventId: b.event_id,
+          userId: App.currentUser.id,
+          seats: b.seats,
+          total: b.seats.length * 350,
+          status: b.status,
+          date: new Date(b.date).toLocaleDateString('en-IN', { year:'numeric', month:'short', day:'numeric' })
+      }));
+    }
+    hideSpinner();
+  } catch(err) {
+    hideSpinner();
+  }
+
+  const userBookings = App.bookings;
 
   if (userBookings.length === 0) {
     container.innerHTML = `
@@ -678,7 +688,43 @@ function renderMyBookings() {
    ============================================================ */
 
 /** Render the admin dashboard */
-function renderAdminDashboard() {
+async function renderAdminDashboard() {
+  try {
+    showSpinner('Loading admin data...');
+    const [statsRes, logsRes] = await Promise.all([
+      fetch('/api/users'),
+      fetch('/fraud')
+    ]);
+    
+    if (statsRes.ok) {
+      const usersData = await statsRes.json();
+      App.adminUsers = usersData.map(u => ({
+          id: u.user_id,
+          name: u.name,
+          email: u.email,
+          bookings: u.total_bookings || 0,
+          flag: u.account_status === 'Active' ? 'safe' : u.account_status === 'Blocked' ? 'danger' : 'warning',
+          lastActivity: u.last_activity || 'Never'
+      }));
+    }
+    
+    if (logsRes.ok) {
+      const logsData = await logsRes.json();
+      App.activityLog = logsData.map(l => ({
+          time: new Date(l.timestamp).toLocaleTimeString('en-IN'),
+          user: l.user_name || `User ${l.user_id}`,
+          action: l.action,
+          type: l.status === 'Normal' ? 'success' : l.status === 'Suspicious' ? 'warning' : 'danger',
+          ip: 'System',
+          userId: l.user_id
+      }));
+    }
+    hideSpinner();
+  } catch (err) {
+    hideSpinner();
+    showToast('error', 'Error', 'Failed to load admin data');
+  }
+
   renderAdminStats();
   renderAdminTable();
   renderActivityLog();
@@ -756,12 +802,14 @@ function renderAdminTable() {
         <td style="color:var(--text-muted);font-size:0.8rem">${u.lastActivity}</td>
         <td>
           <div class="flex gap-1">
-            <button class="btn btn-sm btn-secondary" onclick="showToast('info','Action','Viewing user ${u.id}')">
+            <button class="btn btn-sm btn-secondary" onclick="viewUserLogs('${u.id}')" title="View User Logs">
               <i class="fas fa-eye"></i>
             </button>
-            ${isSusp ? `<button class="btn btn-sm btn-danger" onclick="blockUser('${u.id}')">
+            ${u.flag === 'danger' ? `<button class="btn btn-sm btn-success" onclick="unblockUser('${u.id}')" title="Unblock User">
+              <i class="fas fa-unlock"></i>
+            </button>` : `<button class="btn btn-sm btn-danger" onclick="blockUser('${u.id}')" title="Block User">
               <i class="fas fa-ban"></i>
-            </button>` : ''}
+            </button>`}
           </div>
         </td>
       </tr>`;
@@ -789,19 +837,193 @@ function renderActivityLog() {
 }
 
 /** Block a suspicious user */
-function blockUser(userId) {
-  const user = App.adminUsers.find(u => u.id === userId);
-  if (user) {
-    user.flag = 'danger';
-    renderAdminTable();
-    showToast('warning', 'User flagged', `${user.name} has been blocked`);
+async function blockUser(userId) {
+  try {
+    const res = await fetch('/block', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    });
+    
+    if (res.ok) {
+      const user = App.adminUsers.find(u => u.id == userId);
+      if (user) {
+        user.flag = 'danger';
+        renderAdminTable();
+        renderAdminStats();
+        showToast('warning', 'User blocked', `${user.name} has been blocked`);
+      }
+    } else {
+      const data = await res.json();
+      showToast('error', 'Failed', data.error);
+    }
+  } catch(err) {
+    showToast('error', 'Error', 'Network error');
   }
 }
 
+/** Unblock a user */
+async function unblockUser(userId) {
+  try {
+    const res = await fetch('/unblock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    });
+    
+    if (res.ok) {
+      const user = App.adminUsers.find(u => u.id == userId);
+      if (user) {
+        user.flag = 'safe';
+        renderAdminTable();
+        renderAdminStats();
+        showToast('success', 'User unblocked', `${user.name} has been unblocked`);
+      }
+    } else {
+      const data = await res.json();
+      showToast('error', 'Failed', data.error);
+    }
+  } catch(err) {
+    showToast('error', 'Error', 'Network error');
+  }
+}
+
+/** Run System Fraud Scan */
+async function runFraudScan() {
+  try {
+    showSpinner('Scanning system for anomalies...');
+    const res = await fetch('/api/admin/scan', { method: 'POST' });
+    const data = await res.json();
+    
+    hideSpinner();
+    if (res.ok) {
+      if (data.blocked_count > 0) {
+        showToast('warning', 'Scan Complete', `Auto-blocked ${data.blocked_count} suspicious users.`);
+        // Refresh data
+        renderAdminDashboard(); 
+      } else {
+        showToast('success', 'Scan Complete', 'No new suspicious accounts found.');
+      }
+    } else {
+      showToast('error', 'Scan Failed', data.error || 'Server error');
+    }
+  } catch(err) {
+    hideSpinner();
+    showToast('error', 'Error', 'Network error during scan');
+  }
+}
+
+/** View a specific user's logs */
+function viewUserLogs(userId) {
+  const user = App.adminUsers.find(u => u.id == userId);
+  if (!user) return;
+  
+  document.getElementById('userLogsTitle').innerText = `Logs: ${user.name}`;
+  
+  const logs = App.activityLog.filter(l => l.userId == userId);
+  const tbody = document.getElementById('userLogsBody');
+  
+  if (logs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 1.5rem; color:var(--text-muted);">No activity logs found for this user.</td></tr>`;
+  } else {
+    tbody.innerHTML = logs.map(log => `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <td style="padding: 0.8rem; font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted)">${log.time}</td>
+        <td style="padding: 0.8rem;"><span class="log-dot ${log.type}"></span></td>
+        <td style="padding: 0.8rem; font-size:0.85rem; color:var(--text-primary)">${log.action}</td>
+      </tr>
+    `).join('');
+  }
+  
+  openAuthModal('userLogsModal');
+}
+
+/** Handle Create Event Form Submission */
+async function handleCreateEvent(e) {
+  e.preventDefault();
+  const name = document.getElementById('ceName').value.trim();
+  const venue = document.getElementById('ceVenue').value.trim();
+  const date = document.getElementById('ceDate').value;
+  const time = document.getElementById('ceTime').value;
+  const type = document.getElementById('ceType').value;
+  const price = document.getElementById('cePrice').value;
+  
+  const errEl = document.getElementById('ceError');
+  errEl.style.display = 'none';
+  
+  if (!name || !venue || !date || !time || !type || !price) {
+      errEl.textContent = "All fields are required";
+      errEl.style.display = 'block';
+      return;
+  }
+  
+  try {
+      showSpinner('Publishing Event...');
+      const res = await fetch('/api/admin/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, venue, date, time, type, price })
+      });
+      const data = await res.json();
+      hideSpinner();
+      
+      if (res.ok) {
+          showToast('success', 'Event Published', 'Your new event is live!');
+          document.getElementById('createEventForm').reset();
+          closeAuthModal('createEventModal');
+          
+          // Force refresh events array on next nav to home or immediately
+          App.events = []; 
+          renderAdminStats();
+      } else {
+          errEl.textContent = data.error || 'Failed to create event';
+          errEl.style.display = 'block';
+      }
+  } catch (err) {
+      hideSpinner();
+      errEl.textContent = 'Network error occurred';
+      errEl.style.display = 'block';
+  }
+}
 
 /* ============================================================
    UI HELPERS
    ============================================================ */
+
+/** Switch between User and Admin login tabs */
+function switchLoginTab(type) {
+  const userForm = document.getElementById('loginForm');
+  const adminForm = document.getElementById('adminLoginForm');
+  const userTab = document.getElementById('tabUserLogin');
+  const adminTab = document.getElementById('tabAdminLogin');
+  const footer = document.getElementById('loginRouteFooter');
+
+  if (type === 'admin') {
+    userForm.style.display = 'none';
+    adminForm.style.display = 'block';
+    adminTab.style.background = 'var(--secondary)';
+    adminTab.style.color = '#fff';
+    userTab.style.background = 'transparent';
+    userTab.style.color = 'var(--text-primary)';
+    if (footer) footer.style.display = 'none';
+  } else {
+    adminForm.style.display = 'none';
+    userForm.style.display = 'block';
+    userTab.style.background = 'var(--secondary)';
+    userTab.style.color = '#fff';
+    adminTab.style.background = 'transparent';
+    adminTab.style.color = 'var(--text-primary)';
+    if (footer) footer.style.display = 'block';
+  }
+}
+
+function openAuthModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function closeAuthModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
 
 /** Show a toast notification */
 function showToast(type, title, message) {
@@ -935,6 +1157,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
   if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
+  /* ---------- Admin Login form ---------- */
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  if (adminLoginForm) adminLoginForm.addEventListener('submit', handleAdminLogin);
+
   /* ---------- Register form ---------- */
   const registerForm = document.getElementById('registerForm');
   if (registerForm) registerForm.addEventListener('submit', handleRegister);
@@ -1010,8 +1236,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- Show login page initially ---------- */
-  navigateTo('loginPage');
+  /* ---------- Show landing page initially ---------- */
+  navigateTo('landingPage');
 });
 
 /* ---------- Debounce helper ---------- */
